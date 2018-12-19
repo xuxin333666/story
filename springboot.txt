@@ -1,0 +1,157 @@
+1、spring
+   1、基于xml
+   2、基于annotation
+   3、全配置
+
+   微服务
+   
+   springboot是什么？
+   1、对基于spring的项目的开发更简洁
+   2、提供了一个大整合，基于自动化配置
+   
+2、入门级的实例：
+   1、建一个maven工程
+   2、导入依赖：
+      <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.9.RELEASE</version>
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+    3、springboot的启动类
+      @SpringBootApplication
+		public class HelloSpringboot {
+
+		    public static void main(String[] args) {
+		        SpringApplication.run(HelloSpringboot.class,args);
+		    }
+		}
+	4、写一个controller
+	  @Controller
+		public class HelloController {
+
+		    @RequestMapping("/hello")
+		    @ResponseBody
+		    public String hello(){
+		        return "hello world";
+		    }
+		}
+	 5、启动应用，通过地址访问
+
+3、认识入门级实例中的一些细节问题
+    1、pom文件：spring-boot-starter-parent  管理了springboot的1.5.9这个版本的所有的依赖的版本及依赖
+               spring-boot-starter-web ：导入了web的场景
+    2、启动类
+         @SpringBootApplication   ：@SpringBootConfiguration   @Configuration
+               包扫描的路径
+4、springboot测试
+   		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	@RunWith(SpringRunner.class)
+	@SpringBootTest
+	public class SpringbootDemo02ApplicationTests {
+
+		@Test
+		public void contextLoads() {
+		}
+	}
+5、配置文件
+   properties
+   yml（格式）
+
+   1、在application.properties(yml) 配置一些属性
+   2、@ConfigurationProperties(prefix = "book") 将配置文件中的内容绑定到这个javabean上
+
+  第二种方式：
+    1、自己定义一个配置文件
+    2、在需要绑定的javabean上面@PropertySource({"classpath:book.yaml"})
+    3、在这个javabean上面使用@Value("${id}")绑定对应的值
+
+  问题：不能绑定对象
+
+   第三种方式：spring配置文件的导入
+   1、准备好一个spring的配置文件 ，声明bean
+   2、在主启动类上导入配置文件@ImportResource(locations = {"classpath:beans.xml"})
+   3、在需要绑定javabean上使用@Autowired
+6、多profile
+	  properties文件
+	     1、建一个配置文件application-xx.properties
+	     2、在总配置文件激活某个profile 
+	     	spring.profiles.active=xx
+	  yaml(yml)：
+	  	server:
+		  port: 9090
+		spring:
+		  profiles: test
+		---
+		server:
+		  port: 9898
+		spring:
+		  profiles: pro
+		---
+		spring:
+		  profiles:
+		    active: test
+
+7、配置文件放的位置
+	1、放在resources下
+	2、resources下的config下
+	3、可以放在项目下
+	4、可以放在项目的config下
+
+
+	1、先读取项目目录下的config下的application.properties
+	2、再读取项目目录下的application.properties
+	3、然后在读取resources下的config下的application.properties
+	4、最后读取resources下的application.properties
+
+	从1到4优先级由高到低 高的会覆盖低的相同配置，如果不相同配置形成互补
+8、自动配置
+   1、项目启动的时候会在加载META-INF/spring.factories里面的所有的配置，但是这些配置不是都生效
+   2、在每个配置里面有生效的前提条件
+   3、如果需要改變某些属性，需要在配置文件中改
+
+   如果需要查看哪些自动配置生效  debug： true
+9、静态资源
+  "classpath:/META‐INF/resources/",
+	"classpath:/resources/",
+	"classpath:/static/",
+	"classpath:/public/"
+	
+	欢迎页：在静态资源的路径下面去查找index.html页面作为欢迎页
+	改变静态资源的路径：通过spring.resources.static-locations指定
+10、web部分
+    1、导包（导thymeleaf的starter）
+    2、静态资源及模板的放置路径
+    3、在boot中加入springmvc的额外配置(配置类)（view-controller，interceptor）
+    4、thymeleaf的使用
+       1、引入namespace
+       2、语法：1、连接的使用
+               2、引入片段
+               3、数据展现 (单对象，list集合)
+    
+11、和mybatis整合
+   1、引入依赖
+   2、配置druid
+   3、加载总配置文件和mapper配置文件
+
+	
