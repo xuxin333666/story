@@ -1,0 +1,185 @@
+1、pl/sql是什么？
+2、pl/sql的结构
+    1、声明部分
+	2、执行部分
+	3、异常处理部分
+	
+	DECLARE
+		//声明程序用到的一些变量 或者游标
+	BEGIN
+		//执行部分
+	EXCEPTION 
+		//异常处理部分;
+	END;
+	
+	声明部分不是必选的
+	异常处理部分不是必选的
+	执行部分必须要有的
+	
+	DECLARE
+	  v_age number(3) := 20;
+	BEGIN
+	  DBMS_OUTPUT.put_line('age的值是--->' || v_age);
+	END;
+	
+	set serveroutput on
+3、type,赋值
+   --需求:将雇员编号定义为一个变量，根据这个变量去查询这个用户的工资，并将工资输出出来
+	DECLARE
+	  v_empno emp.empno%type:=7698;--v_empno这个变量的类型和emp表中的empno的类型一致
+	  v_sal emp.sal%type;
+	BEGIN
+	  SELECT sal into v_sal
+	  FROM emp
+	  WHERE empno=v_empno;
+	  
+	  DBMS_OUTPUT.put_line(v_sal);
+	END;
+4、rowtype
+   DECLARE
+	  v_emp emp%rowtype;
+
+	BEGIN
+	  SELECT * into v_emp
+	  FROM emp
+	  WHERE empno=7369;
+	  
+	  DBMS_OUTPUT.put_line(v_emp.ename);
+	END;
+5、for循环
+   BEGIN
+	  FOR i in 1..10 LOOP
+		DBMS_OUTPUT.put_line(i);
+	  END LOOP;
+	END;
+   BEGIN
+	  FOR i in reverse 1..10 LOOP
+		DBMS_OUTPUT.put_line(i);
+	  END LOOP;
+   END;
+6、游标
+   显示游标:
+	   定义游标、打开游标、提取数据、关闭游标
+	   
+	  DECLARE
+		  CURSOR emp_bak_cur IS SELECT * FROM emp_bak;--1、声明游标
+		  v_count number(2);
+		  v_emp emp%rowtype;
+		BEGIN
+		  --2、打开游标
+		  open emp_bak_cur;
+		 
+		  SELECT count(*) INTO v_count
+		  FROM emp_bak;
+		  
+		  FOR i IN 1..v_count LOOP
+			 --3、提取数据
+			  FETCH emp_bak_cur INTO  v_emp;
+			  IF v_emp.deptno = 10 THEN
+				DBMS_OUTPUT.put_line('10号部门加工资了');
+			  ELSIF v_emp.deptno=20 THEN
+				DBMS_OUTPUT.put_line('20号部门调薪了');
+			  ELSIF v_emp.deptno=30 THEN
+				DBMS_OUTPUT.put_line('30号部门发红包了');
+			  END IF;
+		  END LOOP;
+		  
+		  CLOSE emp_bak_cur;
+		END;
+---------------------------------------------------------------------------	
+		DECLARE
+		  CURSOR emp_bak_cur IS SELECT * FROM emp_bak;--1、声明游标
+		  v_emp emp%rowtype;
+		BEGIN
+		  --2、打开游标
+		  open emp_bak_cur;
+		  --3、提取数据
+		  
+		   LOOP
+			  FETCH emp_bak_cur INTO  v_emp;
+			  
+			  IF v_emp.deptno = 10 THEN
+				DBMS_OUTPUT.put_line('10号部门加工资了');
+			  ELSIF v_emp.deptno=20 THEN
+				DBMS_OUTPUT.put_line('20号部门调薪了');
+			  ELSIF v_emp.deptno=30 THEN
+				DBMS_OUTPUT.put_line('30号部门发红包了');
+			  END IF;
+		   EXIT WHEN emp_bak_cur%NOTFOUND;
+
+		  END LOOP;
+		  
+		  CLOSE emp_bak_cur;
+		END;
+   隐式游标：
+     DECLARE
+	  CURSOR emp_bak_cur IS SELECT * FROM emp_bak;--1、声明游标
+	  v_emp emp%rowtype;
+	BEGIN
+	  FOR v_emp IN emp_bak_cur LOOP
+		  IF v_emp.deptno = 10 THEN
+			DBMS_OUTPUT.put_line('10号部门加工资了');
+		  ELSIF v_emp.deptno=20 THEN
+			DBMS_OUTPUT.put_line('20号部门调薪了');
+		  ELSIF v_emp.deptno=30 THEN
+			DBMS_OUTPUT.put_line('30号部门发红包了');
+		  END IF;
+	  END LOOP;
+	END;
+7、存储过程
+   create or replace procedure test_pro(vi_empno in number,vo_sal out number) is
+
+	begin
+		   SELECT sal INTO vo_sal
+		   FROM emp
+		   WHERE empno=vi_empno;
+		   --测试pl/sql中不能直接直接ddl语句
+		   --EXECUTE IMMEDIATE 'create table t_aa(id number(3))';
+	end test_pro;
+	
+	java代码：
+	Class.forName("oracle.jdbc.driver.OracleDriver");
+	Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:orcl", "scott", "tiger");
+	
+	 String str="{call test_pro(?,?)}";
+	
+	CallableStatement cs = connection.prepareCall(str);
+	cs.setInt(1, 7369);
+	
+	cs.registerOutParameter(2, Types.NUMERIC);
+	
+	cs.execute();
+	
+	double d = cs.getDouble(2);
+	System.out.println(d);
+
+	可以有返回值，也可以没有返回值
+8、函数
+    要求一定要有返回值
+	create or replace function fun_test(v_empno number) return emp.sal%type 
+	AS
+	  v_sal emp.sal%type;
+	begin
+	  SELECT sal INTO v_sal
+	  FROM emp
+	  WHERE empno=v_empno;
+	  
+	  RETURN v_sal;
+
+	end fun_test;
+	
+	java调用函数
+	Class.forName("oracle.jdbc.driver.OracleDriver");
+		Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:orcl", "scott", "tiger");
+		
+		 String str="{?=call fun_test(?)}";
+		
+		CallableStatement cs = connection.prepareCall(str);
+		cs.setInt(2, 7369);
+		cs.registerOutParameter(1, Types.NUMERIC);
+		
+		cs.execute();
+		double d = cs.getDouble(1);
+		System.out.println(d);
+		
+   存储过程和函数的区别？
